@@ -1,0 +1,949 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Audio-to-Text NLP Smart Assistants</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --ink: #162027;
+        --muted: #60707c;
+        --line: #d7e0e4;
+        --panel: #ffffff;
+        --soft: #f4f7f8;
+        --mint: #10a887;
+        --coral: #e85d4f;
+        --gold: #c88b00;
+        --blue: #2c75b8;
+        --navy: #203040;
+        --shadow: 0 18px 50px rgba(24, 37, 45, 0.12);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+        color: var(--ink);
+        background: #f8faf9;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      .site-header {
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        padding: 16px clamp(18px, 5vw, 72px);
+        border-bottom: 1px solid rgba(215, 224, 228, 0.8);
+        background: rgba(248, 250, 249, 0.92);
+        backdrop-filter: blur(18px);
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 800;
+      }
+
+      .mark {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        background: var(--ink);
+        color: white;
+        display: block;
+      }
+
+      .mark svg {
+        display: block;
+        width: 100%;
+        height: 100%;
+      }
+
+      nav {
+        display: flex;
+        align-items: center;
+        gap: clamp(14px, 3vw, 34px);
+        color: #40505b;
+        font-size: 14px;
+        font-weight: 700;
+      }
+
+      .button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 44px;
+        padding: 0 18px;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        background: var(--ink);
+        color: white;
+        font-weight: 800;
+        cursor: pointer;
+        transition:
+          transform 160ms ease,
+          background 160ms ease,
+          border-color 160ms ease;
+      }
+
+      .button:hover {
+        transform: translateY(-1px);
+        background: #283945;
+      }
+
+      .button.secondary {
+        background: white;
+        color: var(--ink);
+        border-color: var(--line);
+      }
+
+      .hero {
+        min-height: calc(100vh - 70px);
+        display: grid;
+        grid-template-columns: minmax(0, 0.9fr) minmax(360px, 1.1fr);
+        align-items: center;
+        gap: clamp(28px, 5vw, 70px);
+        padding: clamp(36px, 7vw, 84px) clamp(18px, 5vw, 72px) 28px;
+        background:
+          linear-gradient(90deg, rgba(248, 250, 249, 0.92), rgba(248, 250, 249, 0.36)),
+          url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1440' height='900' viewBox='0 0 1440 900'%3E%3Crect width='1440' height='900' fill='%23edf3f2'/%3E%3Cg opacity='.42' fill='none' stroke='%2395adb4' stroke-width='2'%3E%3Cpath d='M0 692 C178 626 268 742 438 677 S744 534 894 604 1116 804 1440 648'/%3E%3Cpath d='M0 432 C186 365 278 514 440 438 S720 250 919 328 1134 553 1440 411'/%3E%3Cpath d='M0 201 C195 164 277 282 457 222 S760 82 934 147 1115 326 1440 214'/%3E%3C/g%3E%3Cg opacity='.68'%3E%3Crect x='936' y='132' width='276' height='184' rx='18' fill='%23ffffff'/%3E%3Crect x='978' y='176' width='192' height='12' rx='6' fill='%2310a887'/%3E%3Crect x='978' y='205' width='110' height='12' rx='6' fill='%23d7e0e4'/%3E%3Crect x='978' y='235' width='152' height='12' rx='6' fill='%23d7e0e4'/%3E%3Crect x='192' y='560' width='316' height='152' rx='18' fill='%23ffffff'/%3E%3Crect x='236' y='612' width='226' height='13' rx='6' fill='%232c75b8'/%3E%3Crect x='236' y='645' width='156' height='13' rx='6' fill='%23d7e0e4'/%3E%3C/g%3E%3C/svg%3E");
+        background-size: cover;
+        background-position: center;
+      }
+
+      .hero-copy {
+        max-width: 640px;
+      }
+
+      .eyebrow {
+        margin: 0 0 14px;
+        color: #32645a;
+        font-size: 13px;
+        font-weight: 900;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 0;
+        max-width: 730px;
+        font-size: clamp(44px, 6vw, 82px);
+        line-height: 0.98;
+        letter-spacing: 0;
+      }
+
+      .hero-copy p {
+        margin: 24px 0 30px;
+        max-width: 590px;
+        color: #3f515b;
+        font-size: clamp(17px, 2vw, 21px);
+        line-height: 1.62;
+      }
+
+      .hero-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .assistant-console {
+        width: 100%;
+        min-width: 0;
+        border: 1px solid rgba(203, 216, 221, 0.9);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.9);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+      }
+
+      .console-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 16px 18px;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .status {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        color: #2d5d53;
+        font-size: 13px;
+        font-weight: 900;
+      }
+
+      .status::before {
+        content: "";
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: var(--mint);
+        box-shadow: 0 0 0 5px rgba(16, 168, 135, 0.14);
+      }
+
+      .console-body {
+        padding: 20px;
+      }
+
+      canvas {
+        display: block;
+        width: 100%;
+        height: 150px;
+        border: 1px solid #dce5e8;
+        border-radius: 8px;
+        background: #0f1d24;
+      }
+
+      .transcript {
+        margin-top: 16px;
+        padding: 18px;
+        border-radius: 8px;
+        background: var(--soft);
+        border: 1px solid var(--line);
+      }
+
+      .label {
+        margin: 0 0 7px;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 900;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+
+      .transcript strong {
+        font-size: clamp(18px, 2.5vw, 24px);
+        line-height: 1.35;
+      }
+
+      .intent-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+        margin-top: 16px;
+      }
+
+      .intent-card {
+        min-height: 88px;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: white;
+      }
+
+      .intent-card b {
+        display: block;
+        margin-bottom: 7px;
+        color: var(--ink);
+        font-size: 13px;
+      }
+
+      .intent-card span {
+        color: var(--muted);
+        font-size: 13px;
+        line-height: 1.35;
+      }
+
+      section {
+        padding: clamp(54px, 8vw, 92px) clamp(18px, 5vw, 72px);
+      }
+
+      .section-heading {
+        max-width: 760px;
+        margin-bottom: 32px;
+      }
+
+      .section-heading h2 {
+        margin: 0;
+        font-size: clamp(30px, 4vw, 52px);
+        line-height: 1.05;
+      }
+
+      .section-heading p {
+        color: var(--muted);
+        font-size: 18px;
+        line-height: 1.6;
+      }
+
+      .pipeline {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(160px, 1fr));
+        gap: 12px;
+      }
+
+      .step {
+        min-height: 210px;
+        padding: 18px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: white;
+        box-shadow: 0 8px 24px rgba(24, 37, 45, 0.06);
+      }
+
+      .step-number {
+        display: grid;
+        place-items: center;
+        width: 36px;
+        height: 36px;
+        margin-bottom: 22px;
+        border-radius: 8px;
+        background: var(--ink);
+        color: white;
+        font-weight: 900;
+      }
+
+      .step:nth-child(2) .step-number {
+        background: var(--blue);
+      }
+
+      .step:nth-child(3) .step-number {
+        background: var(--mint);
+      }
+
+      .step:nth-child(4) .step-number {
+        background: var(--gold);
+      }
+
+      .step:nth-child(5) .step-number {
+        background: var(--coral);
+      }
+
+      .step h3 {
+        margin: 0 0 10px;
+        font-size: 20px;
+      }
+
+      .step p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.55;
+      }
+
+      .demo-band {
+        background: #1b2a34;
+        color: white;
+      }
+
+      .demo-band .section-heading p {
+        color: #c7d6dc;
+      }
+
+      .demo-layout {
+        display: grid;
+        grid-template-columns: minmax(260px, 0.8fr) minmax(300px, 1.2fr);
+        gap: 22px;
+        align-items: stretch;
+      }
+
+      .command-list,
+      .result-panel {
+        min-width: 0;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      .command-list {
+        display: grid;
+        gap: 8px;
+        padding: 12px;
+      }
+
+      .command {
+        width: 100%;
+        min-height: 56px;
+        padding: 10px 12px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 8px;
+        color: white;
+        background: rgba(255, 255, 255, 0.06);
+        text-align: left;
+        font: inherit;
+        font-weight: 800;
+        cursor: pointer;
+      }
+
+      .command[aria-pressed="true"] {
+        border-color: var(--mint);
+        background: rgba(16, 168, 135, 0.18);
+      }
+
+      .result-panel {
+        padding: 22px;
+      }
+
+      .audio-test {
+        margin-top: 22px;
+        padding: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.06);
+      }
+
+      .audio-test h3 {
+        margin: 0 0 10px;
+        font-size: 22px;
+      }
+
+      .audio-test p {
+        margin: 0 0 16px;
+        color: #c7d6dc;
+        line-height: 1.55;
+      }
+
+      .mic-controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+
+      .mic-output {
+        min-height: 92px;
+        padding: 16px;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 8px;
+        background: #0d171d;
+        color: #d6f6ee;
+        line-height: 1.55;
+      }
+
+      .mic-status {
+        display: inline-flex;
+        align-items: center;
+        min-height: 34px;
+        padding: 0 12px;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.1);
+        color: white;
+        font-size: 13px;
+        font-weight: 900;
+      }
+
+      .json-card {
+        overflow: auto;
+        margin: 0;
+        padding: 18px;
+        border-radius: 8px;
+        background: #0d171d;
+        color: #d6f6ee;
+        font-size: 15px;
+        line-height: 1.6;
+      }
+
+      .features {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+      }
+
+      .feature {
+        min-height: 190px;
+        padding: 22px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: white;
+      }
+
+      .feature h3 {
+        margin: 0 0 10px;
+      }
+
+      .feature p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      .chip-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 18px;
+      }
+
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        min-height: 34px;
+        padding: 0 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #f8faf9;
+        color: #445660;
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .cta {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 24px;
+        border-top: 1px solid var(--line);
+        background: white;
+      }
+
+      .cta h2 {
+        margin: 0 0 10px;
+        font-size: clamp(28px, 4vw, 46px);
+      }
+
+      .cta p {
+        margin: 0;
+        color: var(--muted);
+        line-height: 1.6;
+      }
+
+      footer {
+        padding: 24px clamp(18px, 5vw, 72px);
+        color: #667681;
+        background: #f0f4f5;
+        font-size: 14px;
+      }
+
+      @media (max-width: 980px) {
+        .hero,
+        .demo-layout,
+        .cta {
+          grid-template-columns: 1fr;
+        }
+
+        .hero {
+          min-height: auto;
+        }
+
+        .pipeline,
+        .features {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+
+      @media (max-width: 680px) {
+        .site-header {
+          position: static;
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        nav {
+          width: 100%;
+          justify-content: space-between;
+          gap: 10px;
+          font-size: 13px;
+        }
+
+        .pipeline,
+        .features,
+        .intent-grid {
+          grid-template-columns: 1fr;
+        }
+
+        h1 {
+          font-size: 42px;
+        }
+
+        .hero-actions .button {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <a href="#top" class="brand" aria-label="AudioMind home">
+        <span class="mark" aria-hidden="true">
+          <svg viewBox="0 0 36 36" role="img">
+            <path d="M8 22V14" stroke="white" stroke-width="2.3" stroke-linecap="round" />
+            <path d="M12 25V11" stroke="#8fd3c5" stroke-width="2.3" stroke-linecap="round" />
+            <path d="M16 21V15" stroke="white" stroke-width="2.3" stroke-linecap="round" />
+            <path d="M20 24V12" stroke="#e6c26b" stroke-width="2.3" stroke-linecap="round" />
+            <path d="M24 12H29" stroke="white" stroke-width="2.2" stroke-linecap="round" />
+            <path d="M24 18H31" stroke="#8fd3c5" stroke-width="2.2" stroke-linecap="round" />
+            <path d="M24 24H29" stroke="white" stroke-width="2.2" stroke-linecap="round" />
+          </svg>
+        </span>
+        <span>AudioMind Assistant</span>
+      </a>
+      <nav aria-label="Primary navigation">
+        <a href="#pipeline">Pipeline</a>
+        <a href="#demo">Demo</a>
+        <a href="#stack">Stack</a>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <p class="eyebrow">Speech recognition plus natural language understanding</p>
+          <h1 id="hero-title">Audio-to-Text Converters for Smart Assistants</h1>
+          <p>
+            A modern voice interface that turns noisy speech into clean transcripts,
+            understands intent, extracts details, and sends precise actions to smart
+            home, productivity, and support systems.
+          </p>
+          <div class="hero-actions">
+            <a class="button" href="#demo">Try sample commands</a>
+            <a class="button secondary" href="#pipeline">See architecture</a>
+          </div>
+        </div>
+
+        <div class="assistant-console" aria-label="Live assistant preview">
+          <div class="console-top">
+            <strong>Realtime voice console</strong>
+            <span class="status">Listening</span>
+          </div>
+          <div class="console-body">
+            <canvas id="waveform" width="920" height="300" aria-label="Animated audio waveform"></canvas>
+            <div class="transcript">
+              <p class="label">Current transcript</p>
+              <strong id="liveTranscript">Turn off the living room lights and set the thermostat to 22 degrees.</strong>
+            </div>
+            <div class="intent-grid">
+              <div class="intent-card">
+                <b>Intent</b>
+                <span id="intentPreview">control_environment</span>
+              </div>
+              <div class="intent-card">
+                <b>Entities</b>
+                <span id="entityPreview">living room lights, 22 degrees</span>
+              </div>
+              <div class="intent-card">
+                <b>Action</b>
+                <span id="actionPreview">Send smart-home commands</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="pipeline" aria-labelledby="pipeline-title">
+        <div class="section-heading">
+          <h2 id="pipeline-title">From microphone signal to useful action</h2>
+          <p>
+            The converter is designed as a practical assistant pipeline: each layer
+            improves the signal, narrows uncertainty, and produces structured output
+            that software can trust.
+          </p>
+        </div>
+        <div class="pipeline">
+          <article class="step">
+            <span class="step-number">1</span>
+            <h3>Audio Capture</h3>
+            <p>Record microphone input, stream audio chunks, and detect when a person is speaking.</p>
+          </article>
+          <article class="step">
+            <span class="step-number">2</span>
+            <h3>Signal Cleanup</h3>
+            <p>Reduce noise, normalize volume, trim silence, and prepare a stable signal for recognition.</p>
+          </article>
+          <article class="step">
+            <span class="step-number">3</span>
+            <h3>Speech-to-Text</h3>
+            <p>Use an ASR model to produce transcripts with punctuation, timing, and confidence scores.</p>
+          </article>
+          <article class="step">
+            <span class="step-number">4</span>
+            <h3>NLP Understanding</h3>
+            <p>Classify intent, extract entities, resolve context, and handle ambiguous requests.</p>
+          </article>
+          <article class="step">
+            <span class="step-number">5</span>
+            <h3>Assistant Action</h3>
+            <p>Trigger APIs, smart devices, reminders, searches, or a spoken confirmation response.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="demo" class="demo-band" aria-labelledby="demo-title">
+        <div class="section-heading">
+          <h2 id="demo-title">Interactive command parser</h2>
+          <p>
+            Choose a voice command to see how a smart assistant can convert speech
+            into structured data for downstream automation.
+          </p>
+        </div>
+        <div class="demo-layout">
+          <div class="command-list" aria-label="Sample voice commands">
+            <button class="command" aria-pressed="true" data-command="lights">
+              Turn off the living room lights and set the thermostat to 22 degrees.
+            </button>
+            <button class="command" aria-pressed="false" data-command="reminder">
+              Remind me to drink water at 6 PM every day.
+            </button>
+            <button class="command" aria-pressed="false" data-command="music">
+              Play calm focus music in the kitchen speaker.
+            </button>
+            <button class="command" aria-pressed="false" data-command="meeting">
+              Schedule a design review with Asha tomorrow at 10 AM.
+            </button>
+          </div>
+          <div class="result-panel">
+            <p class="label">NLP result</p>
+            <pre class="json-card"><code id="jsonResult"></code></pre>
+          </div>
+        </div>
+        <div class="audio-test" aria-labelledby="audio-test-title">
+          <h3 id="audio-test-title">Test live audio to text</h3>
+          <p>
+            Use your microphone to try browser-based speech recognition. Speak a
+            command, then copy the transcript into your assistant pipeline.
+          </p>
+          <div class="mic-controls">
+            <button class="button" id="startMic" type="button">Start microphone</button>
+            <button class="button secondary" id="stopMic" type="button">Stop</button>
+            <span class="mic-status" id="micStatus">Ready</span>
+          </div>
+          <div class="mic-output" id="micOutput">Your transcript will appear here.</div>
+        </div>
+      </section>
+
+      <section id="stack" aria-labelledby="stack-title">
+        <div class="section-heading">
+          <h2 id="stack-title">Recommended build stack</h2>
+          <p>
+            Use proven speech, language, and integration tools so the assistant feels
+            responsive in real rooms, not just in quiet demos.
+          </p>
+        </div>
+        <div class="features">
+          <article class="feature">
+            <h3>Speech Recognition</h3>
+            <p>Whisper, Vosk, wav2vec 2.0, Google Speech-to-Text, Azure Speech, or Amazon Transcribe.</p>
+            <div class="chip-row">
+              <span class="chip">ASR</span>
+              <span class="chip">Timestamps</span>
+              <span class="chip">Confidence</span>
+            </div>
+          </article>
+          <article class="feature">
+            <h3>Language Understanding</h3>
+            <p>spaCy, Hugging Face Transformers, Rasa, custom intent classifiers, and entity extractors.</p>
+            <div class="chip-row">
+              <span class="chip">Intent</span>
+              <span class="chip">Entities</span>
+              <span class="chip">Context</span>
+            </div>
+          </article>
+          <article class="feature">
+            <h3>Assistant Integration</h3>
+            <p>FastAPI, MQTT, Home Assistant, calendar APIs, notification services, and text-to-speech.</p>
+            <div class="chip-row">
+              <span class="chip">FastAPI</span>
+              <span class="chip">MQTT</span>
+              <span class="chip">TTS</span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section class="cta" aria-labelledby="cta-title">
+        <div>
+          <h2 id="cta-title">Build assistants that hear clearly and act carefully.</h2>
+          <p>
+            Combine speech recognition, NLP, privacy-first audio handling, and
+            action validation to create a voice experience people can rely on.
+          </p>
+        </div>
+        <a class="button" href="#top">Back to top</a>
+      </section>
+    </main>
+
+    <footer>
+      AudioMind Assistant concept site for audio-to-text NLP smart assistant development.
+    </footer>
+
+    <script>
+      const examples = {
+        lights: {
+          transcript: "Turn off the living room lights and set the thermostat to 22 degrees.",
+          intent: "control_environment",
+          entities: {
+            device: ["living room lights", "thermostat"],
+            action: ["turn off", "set temperature"],
+            value: "22 degrees"
+          },
+          action: "Send commands to smart-home controller"
+        },
+        reminder: {
+          transcript: "Remind me to drink water at 6 PM every day.",
+          intent: "create_recurring_reminder",
+          entities: {
+            task: "drink water",
+            time: "6 PM",
+            repeat: "daily"
+          },
+          action: "Create reminder and confirm schedule"
+        },
+        music: {
+          transcript: "Play calm focus music in the kitchen speaker.",
+          intent: "play_media",
+          entities: {
+            content: "calm focus music",
+            location: "kitchen speaker",
+            mood: "calm"
+          },
+          action: "Start playlist on selected speaker"
+        },
+        meeting: {
+          transcript: "Schedule a design review with Asha tomorrow at 10 AM.",
+          intent: "schedule_meeting",
+          entities: {
+            event: "design review",
+            attendee: "Asha",
+            date: "tomorrow",
+            time: "10 AM"
+          },
+          action: "Check calendar availability"
+        }
+      };
+
+      const liveTranscript = document.querySelector("#liveTranscript");
+      const intentPreview = document.querySelector("#intentPreview");
+      const entityPreview = document.querySelector("#entityPreview");
+      const actionPreview = document.querySelector("#actionPreview");
+      const jsonResult = document.querySelector("#jsonResult");
+      const buttons = document.querySelectorAll(".command");
+      const startMic = document.querySelector("#startMic");
+      const stopMic = document.querySelector("#stopMic");
+      const micStatus = document.querySelector("#micStatus");
+      const micOutput = document.querySelector("#micOutput");
+      const SpeechRecognition =
+        window.SpeechRecognition || window.webkitSpeechRecognition;
+      let recognition;
+
+      function compactEntities(entities) {
+        return Object.values(entities).flat().join(", ");
+      }
+
+      function renderExample(key) {
+        const data = examples[key];
+        liveTranscript.textContent = data.transcript;
+        intentPreview.textContent = data.intent;
+        entityPreview.textContent = compactEntities(data.entities);
+        actionPreview.textContent = data.action;
+        jsonResult.textContent = JSON.stringify(data, null, 2);
+
+        buttons.forEach((button) => {
+          button.setAttribute("aria-pressed", String(button.dataset.command === key));
+        });
+      }
+
+      buttons.forEach((button) => {
+        button.addEventListener("click", () => renderExample(button.dataset.command));
+      });
+
+      renderExample("lights");
+
+      if (!SpeechRecognition) {
+        micStatus.textContent = "Not supported";
+        micOutput.textContent =
+          "This browser does not support the Web Speech API. Try Chrome or Edge on localhost.";
+        startMic.disabled = true;
+        stopMic.disabled = true;
+      } else {
+        recognition = new SpeechRecognition();
+        recognition.continuous = true;
+        recognition.interimResults = true;
+        recognition.lang = "en-US";
+
+        recognition.addEventListener("start", () => {
+          micStatus.textContent = "Listening";
+        });
+
+        recognition.addEventListener("result", (event) => {
+          const transcript = Array.from(event.results)
+            .map((result) => result[0].transcript)
+            .join(" ");
+          micOutput.textContent = transcript || "Listening...";
+        });
+
+        recognition.addEventListener("error", (event) => {
+          micStatus.textContent = "Mic blocked";
+          micOutput.textContent =
+            "Microphone transcription could not start: " + event.error + ". Check browser microphone permission.";
+        });
+
+        recognition.addEventListener("end", () => {
+          if (micStatus.textContent === "Listening") {
+            micStatus.textContent = "Stopped";
+          }
+        });
+
+        startMic.addEventListener("click", () => {
+          micOutput.textContent = "Listening...";
+          recognition.start();
+        });
+
+        stopMic.addEventListener("click", () => {
+          recognition.stop();
+          micStatus.textContent = "Stopped";
+        });
+      }
+
+      const canvas = document.querySelector("#waveform");
+      const ctx = canvas.getContext("2d");
+      const colors = ["#10a887", "#e85d4f", "#c88b00", "#8fd3c5"];
+      let phase = 0;
+
+      function drawWave() {
+        const width = canvas.width;
+        const height = canvas.height;
+        ctx.clearRect(0, 0, width, height);
+        ctx.fillStyle = "#0f1d24";
+        ctx.fillRect(0, 0, width, height);
+
+        ctx.strokeStyle = "rgba(255, 255, 255, 0.08)";
+        ctx.lineWidth = 1;
+        for (let x = 0; x <= width; x += 46) {
+          ctx.beginPath();
+          ctx.moveTo(x, 0);
+          ctx.lineTo(x, height);
+          ctx.stroke();
+        }
+
+        colors.forEach((color, index) => {
+          ctx.beginPath();
+          ctx.strokeStyle = color;
+          ctx.lineWidth = index === 0 ? 4 : 2;
+          for (let x = 0; x <= width; x += 4) {
+            const base = height / 2;
+            const amp = 32 + index * 12;
+            const y =
+              base +
+              Math.sin(x * 0.018 + phase + index * 1.4) * amp * 0.55 +
+              Math.sin(x * 0.043 + phase * 1.6 + index) * amp * 0.28;
+            if (x === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+          }
+          ctx.stroke();
+        });
+
+        ctx.fillStyle = "rgba(255, 255, 255, 0.74)";
+        ctx.font = "700 17px Inter, system-ui, sans-serif";
+        ctx.fillText("voice activity detected", 24, 42);
+        phase += 0.035;
+        requestAnimationFrame(drawWave);
+      }
+
+      drawWave();
+    </script>
+  </body>
+</html>
