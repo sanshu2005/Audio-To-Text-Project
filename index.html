@@ -828,6 +828,8 @@
       const SpeechRecognition =
         window.SpeechRecognition || window.webkitSpeechRecognition;
       let recognition;
+      let finalMicTranscript = "";
+      let isMicListening = false;
 
       function compactEntities(entities) {
         return Object.values(entities).flat().join(", ");
@@ -864,35 +866,60 @@
         recognition.interimResults = true;
         recognition.lang = "en-US";
 
+        function showMicTranscript(interimTranscript = "") {
+          const transcript = [finalMicTranscript, interimTranscript]
+            .map((part) => part.trim())
+            .filter(Boolean)
+            .join(" ");
+          micOutput.textContent = transcript || "Listening...";
+        }
+
         recognition.addEventListener("start", () => {
+          isMicListening = true;
           micStatus.textContent = "Listening";
         });
 
         recognition.addEventListener("result", (event) => {
-          const transcript = Array.from(event.results)
-            .map((result) => result[0].transcript)
-            .join(" ");
-          micOutput.textContent = transcript || "Listening...";
+          let interimTranscript = "";
+
+          for (let index = event.resultIndex; index < event.results.length; index += 1) {
+            const transcript = event.results[index][0].transcript.trim();
+            if (!transcript) continue;
+
+            if (event.results[index].isFinal) {
+              finalMicTranscript = `${finalMicTranscript} ${transcript}`.trim();
+            } else {
+              interimTranscript = `${interimTranscript} ${transcript}`.trim();
+            }
+          }
+
+          showMicTranscript(interimTranscript);
         });
 
         recognition.addEventListener("error", (event) => {
+          isMicListening = false;
           micStatus.textContent = "Mic blocked";
           micOutput.textContent =
             "Microphone transcription could not start: " + event.error + ". Check browser microphone permission.";
         });
 
         recognition.addEventListener("end", () => {
+          isMicListening = false;
           if (micStatus.textContent === "Listening") {
             micStatus.textContent = "Stopped";
           }
+          showMicTranscript();
         });
 
         startMic.addEventListener("click", () => {
+          if (isMicListening) return;
+          finalMicTranscript = "";
           micOutput.textContent = "Listening...";
           recognition.start();
         });
 
         stopMic.addEventListener("click", () => {
+          if (!isMicListening) return;
           recognition.stop();
           micStatus.textContent = "Stopped";
         });
