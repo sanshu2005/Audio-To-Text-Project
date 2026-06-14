@@ -830,6 +830,7 @@
       let recognition;
       let finalMicTranscript = "";
       let isMicListening = false;
+      let shouldKeepListening = false;
 
       function compactEntities(entities) {
         return Object.values(entities).flat().join(", ");
@@ -866,12 +867,77 @@
         recognition.interimResults = true;
         recognition.lang = "en-US";
 
+        function cleanRepeatedSpeech(text) {
+          const words = text
+            .replace(/\s+/g, " ")
+            .trim()
+            .split(" ")
+            .filter(Boolean);
+          const cleaned = [];
+
+          words.forEach((word) => {
+            const previous = cleaned[cleaned.length - 1];
+            if (!previous || previous.toLowerCase() !== word.toLowerCase()) {
+              cleaned.push(word);
+            }
+          });
+
+          for (let size = 2; size <= 5; size += 1) {
+            for (let index = size; index + size <= cleaned.length; index += 1) {
+              const first = cleaned
+                .slice(index - size, index)
+                .join(" ")
+                .toLowerCase();
+              const second = cleaned
+                .slice(index, index + size)
+                .join(" ")
+                .toLowerCase();
+              if (first === second) {
+                cleaned.splice(index, size);
+                index -= size;
+              }
+            }
+          }
+
+          return cleaned.join(" ");
+        }
+
+        function mergeSpeechChunk(current, chunk) {
+          const currentWords = cleanRepeatedSpeech(current).split(" ").filter(Boolean);
+          const chunkWords = cleanRepeatedSpeech(chunk).split(" ").filter(Boolean);
+
+          if (!chunkWords.length) return currentWords.join(" ");
+          if (!currentWords.length) return chunkWords.join(" ");
+
+          const currentLower = currentWords.map((word) => word.toLowerCase());
+          const chunkLower = chunkWords.map((word) => word.toLowerCase());
+          let overlap = 0;
+          const maxOverlap = Math.min(currentWords.length, chunkWords.length);
+
+          for (let size = 1; size <= maxOverlap; size += 1) {
+            const currentEnd = currentLower.slice(currentLower.length - size).join(" ");
+            const chunkStart = chunkLower.slice(0, size).join(" ");
+            if (currentEnd === chunkStart) overlap = size;
+          }
+
+          const mergedWords = currentWords.concat(chunkWords.slice(overlap));
+          return cleanRepeatedSpeech(mergedWords.join(" "));
+        }
+
         function showMicTranscript(interimTranscript = "") {
-          const transcript = [finalMicTranscript, interimTranscript]
+          const transcript = [finalMicTranscript, cleanRepeatedSpeech(interimTranscript)]
             .map((part) => part.trim())
             .filter(Boolean)
             .join(" ");
-          micOutput.textContent = transcript || "Listening...";
+          micOutput.textContent = cleanRepeatedSpeech(transcript) || "Listening...";
+        }
+
+        function startRecognition() {
+          try {
+            recognition.start();
+          } catch (error) {
+            micStatus.textContent = "Listening";
+          }
         }
 
         recognition.addEventListener("start", () => {
@@ -887,9 +953,9 @@
             if (!transcript) continue;
 
             if (event.results[index].isFinal) {
-              finalMicTranscript = `${finalMicTranscript} ${transcript}`.trim();
+              finalMicTranscript = mergeSpeechChunk(finalMicTranscript, transcript);
             } else {
-              interimTranscript = `${interimTranscript} ${transcript}`.trim();
+              interimTranscript = mergeSpeechChunk(interimTranscript, transcript);
             }
           }
 
@@ -898,13 +964,22 @@
 
         recognition.addEventListener("error", (event) => {
           isMicListening = false;
-          micStatus.textContent = "Mic blocked";
+          if (event.error === "no-speech" && shouldKeepListening) {
+            micStatus.textContent = "Listening";
+            return;
+          }
+          shouldKeepListening = false;
+          micStatus.textContent = "Mic stopped";
           micOutput.textContent =
-            "Microphone transcription could not start: " + event.error + ". Check browser microphone permission.";
+            "Microphone transcription stopped: " + event.error + ". Check microphone permission and try again.";
         });
 
         recognition.addEventListener("end", () => {
           isMicListening = false;
+          if (shouldKeepListening) {
+            window.setTimeout(startRecognition, 250);
+            return;
+          }
           if (micStatus.textContent === "Listening") {
             micStatus.textContent = "Stopped";
           }
@@ -913,12 +988,14 @@
 
         startMic.addEventListener("click", () => {
           if (isMicListening) return;
+          shouldKeepListening = true;
           finalMicTranscript = "";
           micOutput.textContent = "Listening...";
-          recognition.start();
+          startRecognition();
         });
 
         stopMic.addEventListener("click", () => {
+          shouldKeepListening = false;
           if (!isMicListening) return;
           recognition.stop();
           micStatus.textContent = "Stopped";
